@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sukoon Community</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+html, body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* 🌿 HERO (FIXED IMAGE POSITION) */
+.hero {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  color: white;
+  padding: 20px;
+
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+    url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1800&q=85');
+
+  background-size: cover;
+  background-position: center 25%;   /* 🔥 PERFECT POSITION */
+  background-repeat: no-repeat;
+}
+
+/* TEXT */
+.hero h1 {
+  font-size: 56px;
+  margin-bottom: 10px;
+}
+
+.hero span {
+  color: #a8e6cf;
+  font-style: italic;
+}
+
+.hero p {
+  max-width: 500px;
+  color: #ddd;
+  margin-bottom: 25px;
+}
+
+/* JOIN BOX */
+.join-box {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  padding: 25px 30px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.join-box input {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 12px;
+  width: 220px;
+}
+
+/* BUTTON */
+.join-btn {
+  background: #3d7a56;
+  color: white;
+  padding: 12px 26px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+}
+
+/* CHAT SECTION */
+#chatSection {
+  display: none;
+  padding: 40px;
+  background: #f7f4ef;
+  min-height: 100vh;
+}
+
+.container {
+  display: flex;
+  gap: 20px;
+}
+
+/* USERS */
+#users {
+  width: 220px;
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+}
+
+/* CHAT BOX */
+.chat-box {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+#messages {
+  height: 300px;
+  overflow-y: auto;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+/* INPUT */
+input {
+  padding: 10px;
+  margin: 5px;
+}
+
+button {
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>One space for <br><span>every voice</span></h1>
+  <p>
+    A shared, accessible forum where all users connect,
+    share, support, and communicate freely.
+  </p>
+
+  <div class="join-box">
+    <input id="username" placeholder="Enter your name"><br>
+    <button class="join-btn" onclick="joinChat()">Join the Forum →</button>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div id="chatSection">
+  <div class="container">
+
+    <!-- USERS -->
+    <div id="users">
+      <h3>🟢 Online</h3>
+      <ul id="userList"></ul>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-box">
+      <div id="messages"></div>
+
+      <input id="msg" placeholder="Type message">
+      <button onclick="sendMessage()">Send</button>
+
+      <br><br>
+
+      <!-- PRIVATE -->
+      <input id="privateUser" placeholder="Username">
+      <input id="privateMsg" placeholder="Private message">
+      <button onclick="sendPrivate()">Send Private</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const socket = io();
+let username = "";
+
+// JOIN
+function joinChat(){
+  username = document.getElementById("username").value;
+
+  if(!username) return alert("Enter name");
+
+  document.querySelector(".hero").style.display = "none";
+  document.getElementById("chatSection").style.display = "block";
+
+  socket.emit("join", username);
+}
+
+// PUBLIC
+function sendMessage(){
+  let msg = document.getElementById("msg").value;
+  socket.emit("chatMessage", msg);
+  document.getElementById("msg").value="";
+}
+
+// PRIVATE
+function sendPrivate(){
+  let toUser = document.getElementById("privateUser").value.trim();
+  let message = document.getElementById("privateMsg").value.trim();
+
+  if(!toUser || !message){
+    alert("Enter username and message");
+    return;
+  }
+
+  socket.emit("privateMessage", { toUser, message });
+  document.getElementById("privateMsg").value="";
+}
+
+// RECEIVE
+socket.on("message", msg => addMessage(msg));
+
+socket.on("privateMessage", data => {
+  addMessage("🔒 " + data.from + ": " + data.message);
+});
+
+// USER LIST (click to auto fill)
+socket.on("userList", users => {
+  let list = document.getElementById("userList");
+  list.innerHTML = "";
+
+  users.forEach(u => {
+    let li = document.createElement("li");
+    li.innerText = u;
+    li.style.cursor = "pointer";
+
+    li.onclick = () => {
+      document.getElementById("privateUser").value = u;
+    };
+
+    list.appendChild(li);
+  });
+});
+
+// ADD MESSAGE
+function addMessage(msg){
+  let div = document.getElementById("messages");
+  let p = document.createElement("p");
+  p.innerText = msg;
+  div.appendChild(p);
+  div.scrollTop = div.scrollHeight;
+}
+</script>
+
+</body>
+</html>

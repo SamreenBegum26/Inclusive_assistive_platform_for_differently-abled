@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+body{font-family:Arial;background:#f7f4ef;margin:0;}
+h1{text-align:center;padding:20px;}
+.section{background:white;margin:20px;padding:20px;border-radius:12px;}
+button{background:#3d7a56;color:white;border:none;padding:6px 10px;border-radius:6px;}
+</style>
+</head>
+
+<body>
+
+<h1>🛡️ Admin Dashboard</h1>
+
+<div class="section">
+  <h3>👥 Users (<span id="userCount">0</span>)</h3>
+  <ul id="userList"></ul>
+</div>
+
+<div class="section">
+  <h3>💬 Chat Monitoring (<span id="msgCount">0</span>)</h3>
+  <div id="chatLog"></div>
+</div>
+
+<script>
+const socket = io();
+
+// RECEIVE DATA FROM SERVER
+socket.on("adminData", data => {
+
+  // USERS
+  let ul = document.getElementById("userList");
+  ul.innerHTML = "";
+  data.users.forEach(u=>{
+    let li = document.createElement("li");
+    li.innerText = u;
+    ul.appendChild(li);
+  });
+
+  document.getElementById("userCount").innerText = data.users.length;
+
+  // MESSAGES
+  let div = document.getElementById("chatLog");
+  div.innerHTML = "";
+  data.messages.forEach(m=>{
+    let p = document.createElement("p");
+    p.innerText = m;
+    div.appendChild(p);
+  });
+
+  document.getElementById("msgCount").innerText = data.messages.length;
+});
+</script>
+
+</body>
+</html>
